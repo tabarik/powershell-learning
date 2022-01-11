@@ -79,8 +79,7 @@ foreach($i in $firstarray)
 function Update-WindowsService
 {
     [CmdletBinding()]
-    
-     
+        
     Param
     (
         # Param1 help description
@@ -92,30 +91,32 @@ function Update-WindowsService
 
         # Param2 help description
         [Parameter(ParameterSetName='StopSet')]
-        [switch]$Stop ,
+        [switch]$Stop,
 
                 # Param3 help description
         [Parameter(ParameterSetName='RestartSet')]
-        [switch]$SRestart 
-    )
-
+        [switch]$Restart
+        
+        )
+    
     Begin
     {
-        Write-Verbose "Updating Service ServiceName....."
+        Write-Verbose "Updating Service $ServiceName....."
     }
     Process
     {
         if($Stop)
         {
-        Set-Service -Name $ServiceName -Status Stopped
+            Set-Service -Name $ServiceName -Status Stopped
         }
-        elseif($SRestart)
+        elseif($Restart)
         {
-        Set-Service -Name $ServiceName -Status Running
+            Set-Service -Name $ServiceName -Status Running
         }
     }
     End
     {
-        Write-Verbose " Service ServiceName  Updated Successfully....."
+        Write-Verbose " Service $ServiceName  Updated Successfully....."
     }
 }
+# This service requires to be run as administrator from Windows Powershell ISE
