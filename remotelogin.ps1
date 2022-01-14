@@ -120,3 +120,96 @@ function Update-WindowsService
     }
 }
 # This service requires to be run as administrator from Windows Powershell ISE
+Get-PSProvider
+# provider example cd HKLM:
+<#1. Types of Error
+.Terminating
+Nn-terminating error#>
+#whatif
+Set-Service -Name ALG -Status Running
+<#PS C:\WINDOWS\system32> Set-Service -Name ALG -Status Stopped -WhatIf
+What if: Performing the operation "Set-Service" on target "Application Layer Gateway Service (ALG)".
+Set-Service -Name ALG -Status Running -Confirm
+#>
+<#Powershell remoting -wsman -web services Management PRIOR TO WINDOWS REMOTE MANAGEMENT WAS DCOM
+WINRM USES WSMAN WORK ON PORT HTTP /HTTPS PROTOCOL
+TYPE OF REMOTING 
+1. ADHOC REMOTING -DOES NOT NEED WINRM
+2. INTERACTIVE REMOTING 
+winrm service should be running , winrm powershel should be there . bY default 2012 there
+But WIN7 winrm service not there 
+#>
+<#
+[cmdletbinding(DefaultParameterSetName="Default")]
+Param(
+[Parameter(Position=0,Mandatory,HelpMessage="Enter the URI path starting with HTTP or HTTPS",
+ValueFromPipeline,ValueFromPipelineByPropertyName)]
+[ValidatePattern( "^(http|https)://" )]
+[Alias("url")]
+[string]$URI,
+[Parameter(ParameterSetName="Detail")]
+[Switch]$Detail,
+[ValidateScript({$_ -ge 0})]
+[int]$Timeout = 30
+)
+Begin {
+    Write-Verbose -Message "Starting $($MyInvocation.Mycommand)" 
+    Write-Verbose -message "Using parameter set $($PSCmdlet.ParameterSetName)" 
+} #close begin block
+Process {
+    Write-Verbose -Message "Testing $uri"
+    Try {
+     #hash table of parameter values for Invoke-Webrequest
+     $paramHash = @{
+     UseBasicParsing = $True
+     DisableKeepAlive = $True
+     Uri = $uri
+     Method = 'Head'
+     ErrorAction = 'stop'
+     TimeoutSec = $Timeout
+    }
+    $test = Invoke-WebRequest @paramHash
+     if ($Detail) {
+        $test.BaseResponse | 
+        Select ResponseURI,ContentLength,ContentType,LastModified,
+        @{Name="Status";Expression={$Test.StatusCode}}
+     } #if $detail
+     else {
+       if ($test.statuscode -ne 200) {
+            #it is unlikely this code will ever run but just in case
+            Write-Verbose -Message "Failed to request $uri"
+            write-Verbose -message ($test | out-string)
+            $False
+         }
+         else {
+            $True
+         }
+     } #else quiet
+     
+    }
+    Catch {
+      #there was an exception getting the URI
+      write-verbose -message $_.exception
+      if ($Detail) {
+        #most likely the resource is 404
+        $objProp = [ordered]@{
+        ResponseURI = $uri
+        ContentLength = $null
+        ContentType = $null
+        LastModified = $null
+        Status = 404
+        }
+        #write a matching custom object to the pipeline
+        New-Object -TypeName psobject -Property $objProp
+        } #if $detail
+      else {
+        $False
+      }
+    } #close Catch block
+} #close Process block
+End {
+    Write-Verbose -Message "Ending $($MyInvocation.Mycommand)"
+} #close end block
+ #close Test-URI Function
+
+#>
